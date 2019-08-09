@@ -22,31 +22,48 @@ SERVER = 'mail.tecnoage.com.br'
 def getEmail():
     body = []
     mail = imaplib.IMAP4_SSL(SERVER)
-    mail.login(EMAIL, PASSWORD)
-    mail.select('inbox')
-	
-	#Apenas e-mails não visualizados, com remetente informatica@policlinicacapaoraso e assunto 'Alerta'
-	#Após verificar os emails, marca como visualizado
-    status, data = mail.search(None, '(FROM "informatica@policlinicacapaoraso.com.br" SUBJECT "Alerta" UNSEEN)')
-    mail_ids = []
 
-    for block in data:
-        mail_ids += block.split()
+    try:
+        mail.login(EMAIL, PASSWORD)
+    except Exception as e:
+        print('Ocorreu um erro ao logar no e-mail:')
+        print(e)
+    else:
+        mail.select('inbox')
 
-    for i in mail_ids:
-        status, data = mail.fetch(i, '(RFC822)')
-        for response_part in data:
-            if isinstance(response_part, tuple):
-                message = email.message_from_bytes(response_part[1])
-                mail_content = message.get_payload()
-                body.append(mail_content)
+        #Apenas e-mails não visualizados, com remetente informatica@policlinicacapaoraso e assunto 'Alerta'
+        #Após verificar os emails, marca como visualizado
+        status, data = mail.search(None, '(FROM "informatica@policlinicacapaoraso.com.br" SUBJECT "Alerta" UNSEEN)')
+        mail_ids = []
 
-    return body
+        for block in data:
+            mail_ids += block.split()
+
+        for i in mail_ids:
+            try:
+                status, data = mail.fetch(i, '(RFC822)')
+            except Exception as e:
+                print('Erro ao buscar informações do e-mail:')
+                print(e)
+            else:
+                for response_part in data:
+                    if isinstance(response_part, tuple):
+                        message = email.message_from_bytes(response_part[1])
+                        mail_content = message.get_payload()
+                        body.append(mail_content)
+                    else:
+                        print('Não foi possível carregar conteúdo do e-mail!')
+
+        return body
 
 
 def enviaMsgTelegram(msg):
-	for ids in id:
-		bot.send_message(ids,msg)
+    for ids in id:
+        try:
+            bot.send_message(ids,msg)
+        except Exception as e:
+            print('Erro ao enviar mensagem ao Telegram!')
+            print(e)
 
 if __name__ == "__main__":
     PASSWORD = getpass.getpass(prompt='Informe a senha para o email joao@tecnoage.com.br: ')
