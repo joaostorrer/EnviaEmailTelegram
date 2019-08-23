@@ -11,13 +11,14 @@ minutos = 1
 bot_token = 'token_do_bot'
 bot = telebot.TeleBot(bot_token)
 
-#Para pegar o id da conversa acessar pelo navegador: https://api.telegram.org/<token>/getUpdates
+#Para pegar o id da conversa acessar pelo navegador: https://api.telegram.org/bot<token>/getUpdates
 #Informar os ids na lista abaixo
 id = []
 
-EMAIL = 'joao@tecnoage.com.br'
+#Informar o e-mail, senha (pode informar pelo getpass também) e SERVER (GMail: imap.gmail.com)
+EMAIL = ''
 PASSWORD = ''
-SERVER = 'mail.tecnoage.com.br'
+SERVER = ''
 
 def getEmail():
     body = []
@@ -31,9 +32,9 @@ def getEmail():
     else:
         mail.select('inbox')
 
-        #Apenas e-mails não visualizados, com remetente informatica@policlinicacapaoraso e assunto 'Alerta'
+        #Apenas e-mails não visualizados, com remetente email_desejado@dominio.com e assunto 'Alerta'
         #Após verificar os emails, marca como visualizado
-        status, data = mail.search(None, '(FROM "informatica@policlinicacapaoraso.com.br" SUBJECT "Alerta" UNSEEN)')
+        status, data = mail.search(None, '(FROM "email_desejado@dominio.com" SUBJECT "Alerta" UNSEEN)')
         mail_ids = []
 
         for block in data:
@@ -49,10 +50,14 @@ def getEmail():
                 for response_part in data:
                     if isinstance(response_part, tuple):
                         message = email.message_from_bytes(response_part[1])
-                        mail_content = message.get_payload()
+                        if message.is_multipart():
+                            mail_content = ''
+                            for part in message.get_payload():
+                                if part.get_content_type() == 'text/plain':
+                                    mail_content += part.get_payload()
+                        else:
+                            mail_content = message.get_payload()
                         body.append(mail_content)
-                    else:
-                        print('Não foi possível carregar conteúdo do e-mail!')
 
         return body
 
@@ -66,7 +71,7 @@ def enviaMsgTelegram(msg):
             print(e)
 
 if __name__ == "__main__":
-    PASSWORD = getpass.getpass(prompt='Informe a senha para o email joao@tecnoage.com.br: ')
+    PASSWORD = getpass.getpass(prompt='Informe a senha para o email: ')
     while True:
         for alerta in getEmail():
             enviaMsgTelegram(alerta)
